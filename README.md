@@ -5,10 +5,13 @@
 
 ## 📸 Screenshots
 
+### Dashboard
 ![Dashboard](assets/screenshots/Dashboard.png)
 
+### IoT Analytics
 ![IoT-Analytics](assets/screenshots/IoT-Analytics.png)
 
+### New Claim
 ![New-Claim](assets/screenshots/New-Claim.png)
 
 ---
