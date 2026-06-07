@@ -7,9 +7,9 @@
 
 ![Dashboard](assets/screenshots/Dashboard.png)
 
-![IoT Analytics](assets/screenshots/IoT-Analytics.png)
+![IoT-Analytics](assets/screenshots/IoT-Analytics.png)
 
-![New Claim](assets/screenshots/New-Claim.png)
+![New-Claim](assets/screenshots/New-Claim.png)
 
 ---
 
@@ -129,7 +129,6 @@ INFURA_IPFS_PROJECT_ID → IPFS storage
 - ## 👨‍💻 Developer
 
 **Kaveesh Dhiman**
-
 - 🏢 Ex-Intern @ National Informatics Centre (NIC), Government of India
 - 🎓 B.Tech CSE — Dronacharya College of Engineering
 - 📧 [kaveesh9876@gmail.com](mailto:kaveesh9876@gmail.com)
