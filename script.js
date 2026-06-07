@@ -1,455 +1,432 @@
-const random = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+﻿// ── GLOBALS ──
+let blockNum = 7429841;
+let claimCounter = 100;
+let sparkData = {1:[],2:[],3:[],4:[]};
+let chartMode = '7d';
+let animFrame;
 
-const state = {
-    blocks: [],
-    claims: [],
-    sensors: [],
-    activity: [],
-    chartRange: '7d'
-};
+// ── INITIAL CLAIMS ──
+const CLAIM_TYPES = ['Vehicle Accident','Property Damage','Medical Emergency','Theft/Burglary','Natural Disaster','Equipment Failure'];
+const STATUSES = ['approved','pending','review','rejected'];
+const STATUS_LABELS = {approved:'Approved',pending:'Pending',review:'In Review',rejected:'Rejected'};
+let claims = [];
 
-const chartOptions = {
-    '7d': [42, 55, 48, 68, 73, 61, 82],
-    '30d': [34, 41, 50, 59, 72, 68, 80, 85, 78, 88, 95, 90],
-    '1y': [20, 34, 38, 56, 72, 83, 91, 80, 86, 92, 101, 108]
-};
+function randInt(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function randItem(arr){return arr[Math.floor(Math.random()*arr.length)];}
+function fmtAmt(n){return '$'+(n).toLocaleString();}
 
-const statuses = ['approved', 'pending', 'review', 'rejected'];
-
-const statusLabels = {
-    approved: 'Approved',
-    pending: 'Pending',
-    review: 'Review',
-    rejected: 'Rejected'
-};
-
-const statusColors = {
-    approved: 'approved',
-    pending: 'pending',
-    review: 'review',
-    rejected: 'rejected'
-};
-
-const chartLabels = {
-    '7d': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    '30d': ['01', '05', '09', '13', '17', '21', '25', '29', '33', '37', '41', '45'],
-    '1y': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-};
-
-const colors = {
-    cyan: 'rgba(0,212,255,0.95)',
-    green: 'rgba(0,255,136,0.95)',
-    amber: 'rgba(255,170,0,0.95)',
-    red: 'rgba(255,51,85,0.95)'
-};
-
-function makeBlocks() {
-    const now = Date.now();
-    for (let i = 1; i <= 8; i += 1) {
-        state.blocks.push({
-            id: `B-${3200 + i}`,
-            hash: `0x${Array.from({ length: 8 }).map(() => random(0, 15).toString(16).toUpperCase()).join('')}`,
-            tx: random(4, 18),
-            gas: `${random(15, 32)} Gwei`,
-            age: `${random(1, 11)}s`
-        });
-    }
+function genClaim(){
+  return {
+    id: 'CLM-'+String(claimCounter++).padStart(5,'0'),
+    type: randItem(CLAIM_TYPES),
+    status: randItem(STATUSES),
+    amount: randInt(1200,85000),
+    policy: 'POL-'+randInt(1000,9999),
+    time: 'Just now',
+    device: 'DEV-'+randInt(1000,9999)
+  };
 }
 
-function makeClaims() {
-    const names = ['Aanya Patel', 'Rohit Singh', 'Samara Lee', 'Daniel Kim', 'Priya Shah', 'Marco Rossi'];
-    const reasons = ['Vehicle collision', 'Fire damage', 'Water leak', 'Theft claim', 'Medical emergency', 'Natural disaster'];
-    const amountChoices = [5200, 9200, 3175, 14400, 8200, 10500];
-
-    for (let i = 0; i < names.length; i += 1) {
-        const status = statuses[random(0, statuses.length - 1)];
-        state.claims.push({
-            id: `CC-0${13 + i}`,
-            name: names[i],
-            status,
-            amount: `$${amountChoices[i].toLocaleString()}`,
-            detail: reasons[i],
-            hash: `0x${Array.from({ length: 8 }).map(() => random(0, 15).toString(16).toUpperCase()).join('')}`
-        });
-    }
-}
-
-function makeSensors() {
-    const devices = ['Impact Sensor', 'Speed Sensor', 'GPS Tracker', 'Health Module', 'Camera Node'];
-    devices.forEach((label) => {
-        state.sensors.push({
-            label,
-            value: `${random(45, 98)}%`,
-            progress: random(46, 98)
-        });
-    });
-}
-
-function makeActivity() {
-    const events = [
-        'Smart contract verified claim payout',
-        'IoT gateway received anomaly alert',
-        'Policy data synced to IPFS',
-        'Fraud system flagged suspicious claim',
-        'Oracle update completed',
-        'Blockchain node consensus reached'
-    ];
-
-    events.forEach((text, index) => {
-        state.activity.push({
-            color: ['#00d4ff', '#00ff88', '#ffaa00', '#ff3355'][index % 4],
-            text,
-            time: `${random(1, 58)}m ago`
-        });
-    });
-}
-
-function populateBlocks() {
-    const container = document.getElementById('blocks-feed');
-    if (!container) return;
-    container.innerHTML = '';
-    state.blocks.forEach((block) => {
-        const row = document.createElement('div');
-        row.className = 'block-row';
-        row.innerHTML = `
-      <span class="block-num">${block.id}</span>
-      <span class="block-hash">${block.hash}</span>
-      <span class="block-txn">${block.tx} tx</span>
-      <span class="block-gas">${block.gas}</span>
-      <span class="block-time">${block.age}</span>
-    `;
-        container.appendChild(row);
-    });
-}
-
-async function loadClaimsFromApi() {
-    try {
-        const response = await fetch('/api/claims');
-        if (!response.ok) throw new Error('API error');
-        const claims = await response.json();
-        if (Array.isArray(claims) && claims.length > 0) {
-            state.claims = claims.map((claim) => ({
-                id: claim._id || claim.id || `CC-${random(300, 999)}`,
-                name: claim.claimant || 'Unknown',
-                status: (claim.status || 'pending').toString().toLowerCase(),
-                amount: claim.amount ? `$${Number(claim.amount).toLocaleString()}` : '$0',
-                detail: claim.description || claim.claimType || 'Claim submitted',
-                hash: claim.blockchainHash || `0x${Array.from({ length: 8 }).map(() => random(0, 15).toString(16).toUpperCase()).join('')}`
-            }));
-            populateClaims();
-        }
-    } catch (error) {
-        console.warn('Could not load claims from API:', error.message);
-        showToast('Backend claims unavailable, using local demo data.', 'info');
-    }
-}
-
-function populateClaims() {
-    const container = document.getElementById('claims-list');
-    const counter = document.getElementById('claim-count');
-    if (!container) return;
-    container.innerHTML = '';
-    state.claims.forEach((claim) => {
-        const statusKey = (claim.status || 'pending').toString().toLowerCase();
-        const item = document.createElement('div');
-        item.className = 'claim-item';
-        item.innerHTML = `
+function renderClaims(){
+  const list = document.getElementById('claims-list');
+  if (!list) return;
+  list.innerHTML = claims.slice(-12).reverse().map(c => `
+    <div class="claim-item">
       <div class="claim-top">
-        <span class="claim-id">${claim.id}</span>
-        <span class="status-pill ${statusColors[statusKey] || 'pending'}">${statusLabels[statusKey] || 'Pending'}</span>
+        <span class="claim-id">${c.id}</span>
+        <span class="status-pill ${c.status}">${STATUS_LABELS[c.status]}</span>
       </div>
-      <div class="claim-desc">${claim.detail || 'Claim details unavailable'}</div>
+      <div class="claim-desc">${c.type} · ${c.policy}</div>
       <div class="claim-meta">
-        <span>${claim.amount || '$0'}</span>
-        <span>${claim.hash || '0x00000000'}</span>
+        <span>📡 ${c.device}</span>
+        <span class="claim-amount">${fmtAmt(c.amount)}</span>
+        <span>${c.time}</span>
+      </div>
+    </div>
+  `).join('');
+  const count = document.getElementById('claim-count');
+  if (count) count.textContent = claims.length + ' active';
+}
+
+// Init claims
+for(let i=0;i<10;i++) claims.push({...genClaim(), time: randInt(1,60)+'m ago'});
+renderClaims();
+
+// ── BLOCKCHAIN BLOCKS ──
+const blocksFeed = document.getElementById('blocks-feed');
+let blockRows = [];
+
+function addBlock(){
+  blockNum++;
+  const block = {
+    num: blockNum,
+    hash: '0x'+Math.random().toString(16).substr(2,12)+'...'+Math.random().toString(16).substr(2,4),
+    txn: randInt(12,180),
+    gas: randInt(18,45)+' Gwei',
+    time: 'now'
+  };
+  blockRows.unshift(block);
+  if(blockRows.length > 8) blockRows.pop();
+  if (blocksFeed) {
+    blocksFeed.innerHTML = blockRows.map((b,i) => `
+      <div class="block-row" style="opacity:${1-i*0.1}">
+        <span class="block-num">#${b.num.toLocaleString()}</span>
+        <span class="block-hash">${b.hash}</span>
+        <span class="block-txn">${b.txn} txns</span>
+        <span class="block-gas">${b.gas}</span>
+        <span class="block-time">${i===0?'now':i+'s ago'}</span>
+      </div>
+    `).join('');
+  }
+  const netBlock = document.getElementById('net-block');
+  if (netBlock) netBlock.textContent = 'Block #'+blockNum.toLocaleString();
+}
+addBlock();
+
+// ── IOT SENSORS ──
+const SENSORS = [
+  {name:'Impact Force', unit:'kN', min:0, max:100, color:'var(--accent-red)', val:45},
+  {name:'Temperature', unit:'°C', min:-10, max:80, color:'var(--accent-amber)', val:28},
+  {name:'GPS Velocity', unit:'km/h', min:0, max:200, color:'var(--accent-cyan)', val:67},
+  {name:'Air Pressure', unit:'hPa', min:900, max:1100, color:'var(--accent-green)', val:960},
+];
+let sensorVals = SENSORS.map(s=>s.val);
+
+function renderSensors(){
+  const sensorsList = document.getElementById('sensors-list');
+  if (!sensorsList) return;
+  sensorsList.innerHTML = SENSORS.map((s,i) => {
+    const v = sensorVals[i];
+    const pct = Math.round((v-s.min)/(s.max-s.min)*100);
+    return `
+      <div class="sensor-item">
+        <div class="sensor-top">
+          <span class="sensor-name">${s.name}</span>
+          <span class="sensor-val" style="color:${s.color}">${v.toFixed(1)} ${s.unit}</span>
+        </div>
+        <div class="sensor-bar">
+          <div class="sensor-fill" style="width:${pct}%;background:${s.color}"></div>
+        </div>
       </div>
     `;
-        container.appendChild(item);
-    });
-    if (counter) counter.textContent = `${state.claims.length} active`;
+  }).join('');
+}
+renderSensors();
+
+// IoT Map dots
+const map = document.getElementById('iot-map');
+if (map) {
+  for(let i=0;i<12;i++){
+    const d = document.createElement('div');
+    d.className = 'map-dot';
+    const colors = ['var(--accent-cyan)','var(--accent-green)','var(--accent-amber)'];
+    const c = randItem(colors);
+    d.style.cssText = `left:${randInt(8,92)}%;top:${randInt(10,85)}%;background:${c};color:${c}`;
+    d.style.animationDelay = randInt(0,2000)+'ms';
+    map.appendChild(d);
+  }
 }
 
-function populateSensors() {
-    const container = document.getElementById('sensors-list');
-    if (!container) return;
-    container.innerHTML = '';
-    state.sensors.forEach((sensor) => {
-        const item = document.createElement('div');
-        item.className = 'sensor-item';
-        item.innerHTML = `
-      <div class="sensor-top">
-        <span class="sensor-name">${sensor.label}</span>
-        <span class="sensor-val">${sensor.value}</span>
-      </div>
-      <div class="sensor-bar"><div class="sensor-fill" style="width:${sensor.progress}%"></div></div>
-    `;
-        container.appendChild(item);
-    });
+// ── SPARKLINES ──
+function genSparkData(n){let d=[];let v=50;for(let i=0;i<n;i++){v+=randInt(-8,8);v=Math.max(10,Math.min(90,v));d.push(v);}return d;}
+for(let k=1;k<=4;k++) sparkData[k]=genSparkData(20);
+
+function renderSparks(){
+  for(let k=1;k<=4;k++){
+    const el = document.getElementById('spark-'+k);
+    if (!el) continue;
+    const d = sparkData[k];
+    const pts = d.map((v,i)=>`${(i/(d.length-1))*120},${36-v*0.34}`).join(' ');
+    el.setAttribute('points',pts);
+  }
 }
+renderSparks();
 
-function populateActivity() {
-    const container = document.getElementById('activity-feed');
-    if (!container) return;
-    container.innerHTML = '';
-    state.activity.forEach((event) => {
-        const item = document.createElement('div');
-        item.className = 'activity-item';
-        item.innerHTML = `
-      <span class="activity-dot" style="background:${event.color}"></span>
-      <div class="activity-text"><strong>${event.text}</strong></div>
-      <span class="activity-time">${event.time}</span>
-    `;
-        container.appendChild(item);
-    });
-}
+// ── ANALYTICS CHART ──
+const CHART_DATA = {
+  '7d': [42,67,31,88,55,73,91],
+  '30d': [55,48,72,39,85,61,78,44,91,57,63,80,35,92,68,74,50,87,42,76,58,83,47,71,89,53,66,79,43,95],
+  '1y': [320,380,290,440,510,395,480,550,430,490,560,610]
+};
 
-function drawChart(range) {
-    const svg = document.getElementById('analytics-chart');
-    if (!svg) return;
-    const values = chartOptions[range] || chartOptions['7d'];
-    const labels = chartLabels[range] || chartLabels['7d'];
-    const width = 320;
-    const height = 140;
-    const padding = 20;
-    const maxValue = Math.max(...values) + 10;
-    const step = (width - padding * 2) / (values.length - 1);
+function renderChart(){
+  const svg = document.getElementById('analytics-chart');
+  if (!svg) return;
+  const data = CHART_DATA[chartMode];
+  const w=320,h=120;
+  const maxV = Math.max(...data)*1.1;
+  const pts = data.map((v,i)=>{
+    const x = (i/(data.length-1))*(w-20)+10;
+    const y = h - (v/maxV)*(h-20) - 10;
+    return `${x},${y}`;
+  });
+  const ptsStr = pts.join(' ');
+  const first = pts[0].split(',');
+  const last = pts[pts.length-1].split(',');
+  const fillPath = `M${first[0]},${h-10} L${ptsStr.replace(/(\d+\.?\d*),(\d+\.?\d*)/g,'$1,$2')} L${last[0]},${h-10}Z`;
 
-    const points = values.map((value, index) => {
-        const x = padding + step * index;
-        const y = height - padding - ((value / maxValue) * (height - padding * 2));
-        return `${x},${y}`;
-    }).join(' ');
-
-    const line = `
-    <polyline points="${points}" fill="none" stroke="${colors.cyan}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"></polyline>
-    <path d="M${padding},${height - padding} ${points.split(' ')[0]} L${points.split(' ').slice(-1)[0]} ${height - padding} Z" fill="rgba(0,212,255,0.12)"></path>
-  `;
-
-    const circles = values.map((value, index) => {
-        const x = padding + step * index;
-        const y = height - padding - ((value / maxValue) * (height - padding * 2));
-        return `<circle cx="${x}" cy="${y}" r="4" fill="${colors.green}" />`;
-    }).join('');
-
-    svg.innerHTML = `
-    <rect x="0" y="0" width="${width}" height="${height}" fill="transparent" />
-    ${line}
-    ${circles}
-    ${labels.map((label, index) => `
-      <text x="${padding + step * index}" y="${height - 4}" fill="${index === labels.length - 1 ? '#fff' : '#7a9cc4'}" font-size="10" text-anchor="middle">${label}</text>
-    `).join('')}
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--accent-cyan)" stop-opacity="0.3"/>
+        <stop offset="100%" stop-color="var(--accent-cyan)" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    ${[0.25,0.5,0.75,1].map(t=>`<line x1="10" y1="${h-(t*(h-20))-10}" x2="${w-10}" y2="${h-(t*(h-20))-10}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`).join('')}
+    <path d="${fillPath}" fill="url(#cg)"/>
+    <polyline points="${ptsStr}" fill="none" stroke="var(--accent-cyan)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    ${pts.map(p=>`<circle cx="${p.split(',')[0]}" cy="${p.split(',')[1]}" r="3" fill="var(--accent-cyan)" opacity="0.7"/>`).join('')}
   `;
 }
+renderChart();
 
-function updateNetworkStatus() {
-    const block = document.getElementById('net-block');
-    const iot = document.getElementById('net-iot');
-    const gas = document.getElementById('net-gas');
-    const tps = document.getElementById('net-tps');
-    if (block) block.textContent = `Block #${random(7_400_000, 7_450_000).toLocaleString()}`;
-    if (iot) iot.textContent = `${random(230, 255)} Devices`;
-    if (gas) gas.textContent = `${random(18, 42)} Gwei`;
-    if (tps) tps.textContent = `${random(720, 980)}`;
+function switchChart(btn, mode){
+  chartMode = mode;
+  document.querySelectorAll('.analytics-panel .panel-ctrl').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderChart();
 }
 
-function openModal() {
-    const modal = document.getElementById('modal');
-    if (modal) modal.classList.add('open');
+// ── ACTIVITY FEED ──
+const ACTIVITIES = [
+  {text:'Smart contract <strong>ClaimProcessor</strong> executed claim CLM-00098', color:'var(--accent-cyan)'},
+  {text:'Fraud alert on policy <strong>POL-7731</strong> — flagged by ML model', color:'var(--accent-red)'},
+  {text:'IoT device <strong>DEV-4421</strong> registered on Polygon', color:'var(--accent-green)'},
+  {text:'Payout of <strong>$24,500</strong> approved and transferred', color:'var(--accent-green)'},
+  {text:'New node joined the network — <strong>0x9f4a...b3c1</strong>', color:'var(--accent-cyan)'},
+  {text:'Oracle price feed updated — ETH/USD <strong>$3,241</strong>', color:'var(--accent-amber)'},
+  {text:'Policy <strong>POL-9812</strong> renewed via smart contract', color:'var(--accent-blue)'},
+  {text:'3D impact sensor <strong>DEV-0012</strong> triggered alert', color:'var(--accent-red)'},
+];
+let activityLog = [];
+for(let i=0;i<6;i++) activityLog.push({...ACTIVITIES[i%ACTIVITIES.length], time: (i+1)+'m ago'});
+
+function renderActivity(){
+  const feed = document.getElementById('activity-feed');
+  if (!feed) return;
+  feed.innerHTML = activityLog.slice(-10).reverse().map(a=>`
+    <div class="activity-item">
+      <div class="activity-dot" style="background:${a.color};box-shadow:0 0 6px ${a.color}"></div>
+      <div class="activity-text">${a.text}</div>
+      <div class="activity-time">${a.time}</div>
+    </div>
+  `).join('');
 }
+renderActivity();
 
-function closeModal() {
-    const modal = document.getElementById('modal');
-    if (modal) modal.classList.remove('open');
-}
+// ── 3D BLOCKCHAIN CANVAS ──
+(function(){
+  const canvas = document.getElementById('three-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H;
+  let blocks3d = [];
+  let t = 0;
 
-function showToast(message, type = 'info') {
-    const container = document.getElementById('toasts');
-    if (!container) return;
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `<span>${message}</span><button class="toast-close">✕</button>`;
-    const closeBtn = toast.querySelector('.toast-close');
-    closeBtn.addEventListener('click', () => toast.remove());
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 3800);
-}
+  function resize(){
+    W = canvas.offsetWidth; H = canvas.offsetHeight;
+    canvas.width = W; canvas.height = H;
+  }
+  resize();
+  window.addEventListener('resize', resize);
 
-function navClick(element) {
-    document.querySelectorAll('.nav-item').forEach((item) => item.classList.remove('active'));
-    element.classList.add('active');
-    showToast(`Switched to ${element.textContent.trim()}`, 'success');
-}
+  for(let i=0;i<7;i++){
+    blocks3d.push({
+      x: 80 + i * 155,
+      y: H/2,
+      w: 120, h: 70, d: 24,
+      label: '#'+(blockNum-6+i),
+      txns: randInt(20,150),
+      color: i===6?'#00d4ff':'#0f4080',
+      glow: i===6
+    });
+  }
 
-function switchChart(button, range) {
-    document.querySelectorAll('.panel-ctrl').forEach((ctrl) => ctrl.classList.remove('active'));
-    button.classList.add('active');
-    state.chartRange = range;
-    drawChart(range);
-}
+  function drawBlock3D(b, offset){
+    const x=b.x+Math.sin(t*0.5+offset)*3;
+    const y=b.y+Math.cos(t*0.7+offset)*2;
+    const w=b.w, h=b.h, d=b.d;
 
-async function submitClaim() {
-    const policy = document.getElementById('f-policy').value.trim();
-    const type = document.getElementById('f-type').value;
-    const desc = document.getElementById('f-desc').value.trim();
-    const amount = document.getElementById('f-amount').value.trim();
-    const iot = document.getElementById('f-iot').value.trim();
-    const priority = document.getElementById('f-priority').value;
+    ctx.beginPath();
+    ctx.moveTo(x+w/2,y-h/2);
+    ctx.lineTo(x+w/2+d*0.6,y-h/2-d*0.4);
+    ctx.lineTo(x+w/2+d*0.6,y+h/2-d*0.4);
+    ctx.lineTo(x+w/2,y+h/2);
+    ctx.closePath();
+    ctx.fillStyle = b.glow?'rgba(0,100,200,0.6)':'rgba(5,20,60,0.8)';
+    ctx.fill();
+    ctx.strokeStyle = b.color; ctx.lineWidth=1; ctx.stroke();
 
-    if (!policy || !desc || !amount || !iot) {
-        showToast('Please fill in all required claim fields.', 'error');
-        return;
+    ctx.beginPath();
+    ctx.moveTo(x-w/2,y-h/2);
+    ctx.lineTo(x+w/2,y-h/2);
+    ctx.lineTo(x+w/2+d*0.6,y-h/2-d*0.4);
+    ctx.lineTo(x-w/2+d*0.6,y-h/2-d*0.4);
+    ctx.closePath();
+    ctx.fillStyle = b.glow?'rgba(0,150,255,0.4)':'rgba(8,30,80,0.8)';
+    ctx.fill();
+    ctx.strokeStyle = b.color; ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(x-w/2,y-h/2);
+    ctx.lineTo(x+w/2,y-h/2);
+    ctx.lineTo(x+w/2,y+h/2);
+    ctx.lineTo(x-w/2,y+h/2);
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(x-w/2,y-h/2,x+w/2,y+h/2);
+    if(b.glow){
+      grad.addColorStop(0,'rgba(0,100,255,0.9)');
+      grad.addColorStop(1,'rgba(0,200,255,0.7)');
+    } else {
+      grad.addColorStop(0,'rgba(10,22,60,0.95)');
+      grad.addColorStop(1,'rgba(6,14,40,0.95)');
+    }
+    ctx.fillStyle=grad; ctx.fill();
+    ctx.strokeStyle=b.color; ctx.lineWidth=1.5; ctx.stroke();
+
+    if(b.glow){
+      ctx.shadowColor='#00d4ff'; ctx.shadowBlur=20;
+      ctx.strokeStyle='rgba(0,212,255,0.6)'; ctx.lineWidth=2;
+      ctx.strokeRect(x-w/2,y-h/2,w,h);
+      ctx.shadowBlur=0;
     }
 
-    const newClaim = {
-        claimant: 'ChainClaim User',
-        amount: Number(amount),
-        status: 'pending',
-        blockchainHash: `0x${Array.from({ length: 8 }).map(() => random(0, 15).toString(16).toUpperCase()).join('')}`,
-        policyId: policy,
-        claimType: type,
-        description: desc,
-        iotDevice: iot,
-        priority
-    };
+    ctx.fillStyle = b.glow?'#00d4ff':'rgba(100,160,220,0.8)';
+    ctx.font = 'bold 11px JetBrains Mono, monospace';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(b.label, x, y-10);
 
-    try {
-        const response = await fetch('/api/claims', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newClaim)
-        });
+    ctx.fillStyle='rgba(100,160,200,0.6)';
+    ctx.font='10px JetBrains Mono, monospace';
+    ctx.fillText(b.txns+' txns', x, y+8);
+  }
 
-        if (!response.ok) throw new Error('Submit failed');
-        const saved = await response.json();
+  function drawConnector(b1, b2, offset){
+    const x1=b1.x+b1.w/2+Math.sin(t*0.5)*3;
+    const x2=b2.x-b2.w/2+Math.sin(t*0.5+0.5)*3;
+    const y=b1.y+Math.cos(t*0.7)*2;
+    const grad = ctx.createLinearGradient(x1,y,x2,y);
+    grad.addColorStop(0,'rgba(0,102,255,0.8)');
+    grad.addColorStop(1,'rgba(0,212,255,0.8)');
+    ctx.strokeStyle=grad; ctx.lineWidth=1.5;
+    ctx.setLineDash([4,4]);
+    ctx.lineDashOffset = -t*2;
+    ctx.beginPath(); ctx.moveTo(x1,y); ctx.lineTo(x2,y); ctx.stroke();
+    ctx.setLineDash([]);
+  }
 
-        state.claims.unshift({
-            id: saved._id || `CC-${random(400, 999)}`,
-            name: saved.claimant || 'New Claim',
-            status: (saved.status || 'pending').toString().toLowerCase(),
-            // FIXED: proper money format
-            amount: `$${Number(saved.amount).toLocaleString()}`,
-            detail: saved.description || saved.claimType || `${type} - ${desc}`,
-            hash: saved.blockchainHash || newClaim.blockchainHash
-        });
+  function animate(){
+    ctx.clearRect(0,0,W,H);
 
-        populateClaims();
-        closeModal();
-        showToast('Claim submitted to blockchain!', 'success');
-    } catch (error) {
-        console.warn('Claim API post failed:', error.message);
-        state.claims.unshift({
-            id: `CC-${random(301, 399)}`,
-            name: 'New Claim',
-            status: 'pending',
-            amount: `$${Number(amount).toLocaleString()}`,
-            detail: `${type} - ${desc}`,
-            hash: newClaim.blockchainHash
-        });
-        populateClaims();
-        closeModal();
-        showToast('Claim saved locally; backend unavailable.', 'error');
-    }
-}
-
-function animateCanvas() {
-    const canvas = document.getElementById('three-canvas');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
-
-    const points = [];
-    const count = 12;
-    const range = rect.width - 40;
-    for (let i = 0; i < count; i += 1) {
-        points.push({ x: 20 + (range / (count - 1)) * i, y: 80 + Math.sin(i * 0.77) * 28 });
+    for(let y=0;y<H;y+=3){
+      ctx.fillStyle='rgba(0,0,0,0.08)';
+      ctx.fillRect(0,y,W,1);
     }
 
-    let tick = 0;
-    function draw() {
-        ctx.clearRect(0, 0, rect.width, rect.height);
-        ctx.fillStyle = 'rgba(0, 212, 255, 0.03)';
-        ctx.fillRect(0, 0, rect.width / dpr, rect.height / dpr);
-
-        ctx.strokeStyle = 'rgba(0,212,255,0.85)';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        points.forEach((point, index) => {
-            point.y = 80 + Math.sin((index * 0.8) + tick * 0.018) * 30;
-            if (index === 0) ctx.moveTo(point.x, point.y);
-            else ctx.lineTo(point.x, point.y);
-        });
-        ctx.stroke();
-
-        points.forEach((point) => {
-            ctx.fillStyle = 'rgba(0,255,136,0.8)';
-            ctx.beginPath();
-            ctx.arc(point.x, point.y, 6, 0, Math.PI * 2);
-            ctx.fill();
-        });
-
-        tick += 1;
-        requestAnimationFrame(draw);
+    for(let i=0;i<blocks3d.length-1;i++){
+      drawConnector(blocks3d[i], blocks3d[i+1], i*0.3);
     }
 
-    draw();
+    blocks3d.forEach((b,i) => drawBlock3D(b, i*0.4));
+
+    t += 0.02;
+    animFrame = requestAnimationFrame(animate);
+  }
+  animate();
+
+  setInterval(()=>{
+    blocks3d.forEach(b=>b.glow=false);
+    blocks3d.push({
+      x: blocks3d[blocks3d.length-1].x + 155,
+      y: H/2, w:120,h:70,d:24,
+      label:'#'+blockNum,
+      txns:randInt(20,150),
+      color:'#00d4ff', glow:true
+    });
+    blocks3d.shift();
+    blocks3d.forEach((b,i)=>{ b.x = 80+i*155; });
+  }, 4000);
+})();
+
+// ── LIVE UPDATES ──
+function liveUpdate(){
+  for(let k=1;k<=4;k++){
+    sparkData[k].push(randInt(20,85));
+    if(sparkData[k].length>20) sparkData[k].shift();
+  }
+  renderSparks();
+
+  sensorVals = sensorVals.map((v,i)=>{
+    const s=SENSORS[i];
+    v += (Math.random()-0.48)*((s.max-s.min)*0.04);
+    return Math.max(s.min, Math.min(s.max, v));
+  });
+  renderSensors();
+
+  const gasEl = document.getElementById('net-gas');
+  const tpsEl = document.getElementById('net-tps');
+  if (gasEl) gasEl.textContent = randInt(18,45)+' Gwei';
+  if (tpsEl) tpsEl.textContent = randInt(700,1200);
 }
 
-function updateLiveValues() {
-    const total = document.getElementById('kpi-total');
-    const approved = document.getElementById('kpi-approved');
-    const pending = document.getElementById('kpi-pending');
-    const fraud = document.getElementById('kpi-fraud');
+setInterval(liveUpdate, 2000);
+setInterval(addBlock, 4000);
 
-    if (total) total.textContent = random(4200, 5200).toLocaleString();
-    // FIXED: proper $M format
-    if (approved) approved.textContent = `$${(random(16_000_000, 20_000_000) / 1_000_000).toFixed(1)}M`;
-    if (pending) pending.textContent = random(210, 280).toString();
-    if (fraud) fraud.textContent = `$${(random(2_700_000, 3_500_000) / 1_000_000).toFixed(1)}M`;
+setInterval(()=>{
+  const c = genClaim();
+  claims.push(c);
+  if(claims.length > 50) claims.shift();
+  renderClaims();
+  const act = ACTIVITIES[Math.floor(Math.random()*ACTIVITIES.length)];
+  activityLog.push({...act, time:'now'});
+  if(activityLog.length>20) activityLog.shift();
+  renderActivity();
+}, 7000);
+
+// ── MODAL ──
+function openModal(){ document.getElementById('modal').classList.add('open'); }
+function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+
+function submitClaim(){
+  const desc = document.getElementById('f-desc').value || document.getElementById('f-type').value;
+  const amount = parseInt(document.getElementById('f-amount').value)||12500;
+  const c = {
+    id:'CLM-'+String(claimCounter++).padStart(5,'0'),
+    type: desc,
+    status:'pending',
+    amount,
+    policy: document.getElementById('f-policy').value||'POL-0000',
+    time:'Just now',
+    device: document.getElementById('f-iot').value||'DEV-0000'
+  };
+  claims.push(c);
+  renderClaims();
+  activityLog.push({text:`New claim <strong>${c.id}</strong> submitted — ${c.type}`, color:'var(--accent-amber)', time:'now'});
+  renderActivity();
+  closeModal();
+  showToast('✅ Claim submitted to blockchain!', 'success');
+  setTimeout(()=>showToast('⛓️ Smart contract executing...','info'),1200);
 }
 
-function bindEvents() {
-    const connectBtn = document.querySelector('.connect-btn');
-    if (connectBtn) {
-        connectBtn.addEventListener('click', () => {
-            connectBtn.textContent = 'Connecting...';
-            setTimeout(() => {
-                connectBtn.textContent = 'Wallet Connected';
-                connectBtn.style.background = 'linear-gradient(135deg, #10b981, #06b6d4)';
-            }, 1200);
-        });
-    }
+// ── TOAST ──
+function showToast(msg, type='info'){
+  const div = document.createElement('div');
+  div.className = `toast ${type}`;
+  div.innerHTML = msg;
+  const toasts = document.getElementById('toasts');
+  if (!toasts) return;
+  toasts.appendChild(div);
+  setTimeout(()=>div.remove(), 3500);
 }
 
-async function start() {
-    makeBlocks();
-    makeClaims();
-    makeSensors();
-    makeActivity();
-    await loadClaimsFromApi();
-    populateBlocks();
-    populateClaims();
-    populateSensors();
-    populateActivity();
-    drawChart(state.chartRange);
-    updateNetworkStatus();
-    animateCanvas();
-    bindEvents();
-
-    setInterval(() => {
-        updateNetworkStatus();
-        updateLiveValues();
-    }, 4500);
+// ── NAV ──
+function navClick(el){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  showToast('Loading '+el.textContent.trim().replace(/\d+/g,'' )+'...','info');
 }
 
-document.addEventListener('DOMContentLoaded', start);
-
-window.openModal = openModal;
-window.closeModal = closeModal;
-window.submitClaim = submitClaim;
-window.navClick = navClick;
-window.switchChart = switchChart;
-window.showToast = showToast;
+const modalOverlay = document.getElementById('modal');
+if (modalOverlay) {
+  modalOverlay.addEventListener('click',function(e){if(e.target===this)closeModal();});
+}
