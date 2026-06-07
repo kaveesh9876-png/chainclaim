@@ -6,18 +6,16 @@
 
 ## 📸 Screenshots
 
-### Dashboard
+## 📸 Screenshots
 
+### Dashboard
 ![Dashboard](assets/screenshots/Dashboard.png)
 
 ### IoT Analytics
-
-![IoT Analytics](assets/screenshots/IoT-Analytics.png)
+![IoT Analytics](assets/screenshots/IoT%20Analytics.png)
 
 ### New Claim
-
-![New Claim](assets/screenshots/New-Claim.png)
-
+![New Claim](assets/screenshots/New%20Claim.png)
 ---
 
 ## 🏗️ Project Structure
