@@ -1,4 +1,5 @@
 # ⛓️ ChainClaim — Enterprise Blockchain Insurance Platform
+
 > Polygon zkEVM + Chainlink Oracle + IPFS + IoT Sensors
 
 ---
@@ -6,87 +7,98 @@
 ## 📸 Screenshots
 
 ### Dashboard
+
 ![Dashboard](assets/screenshots/Dashboard.png)
 
 ### IoT Analytics
-![IoT-Analytics](assets/screenshots/IoT-Analytics.png)
+
+![IoT Analytics](assets/screenshots/IoT-Analytics.png)
 
 ### New Claim
-![New-Claim](assets/screenshots/New-Claim.png)
+
+![New Claim](assets/screenshots/New-Claim.png)
 
 ---
 
 ## 🏗️ Project Structure
 
-```
+```text
 CHAINCLAIM/
 ├── backend/
 │   ├── controllers/
-│   │   └── claimController.js      # Claim CRUD logic
+│   │   └── claimController.js
 │   ├── models/
-│   │   ├── Claim.js                # Claim schema
-│   │   └── User.js                 # User schema
-│   └── routes/
-│       └── claimRoutes.js          # API routes
-│   └── server.js                   # Express server
+│   │   ├── Claim.js
+│   │   └── User.js
+│   ├── routes/
+│   │   └── claimRoutes.js
+│   └── server.js
 ├── contracts/
-│   └── ClaimProcessor.sol          # Solidity smart contract
+│   └── ClaimProcessor.sol
 ├── scripts/
-│   └── deploy.js                   # Hardhat deploy script  ← NEW
+│   └── deploy.js
 ├── iot/
-│   └── sensor_collector.py         # IoT sensor data
-├── deployments/                    # Auto-generated after deploy
-├── assets/screenshots/             # Project screenshots
-├── index.html                      # Frontend
-├── script.js                       # Frontend JS
-├── style.css                       # Frontend CSS
-├── hardhat.config.js               # Hardhat config         ← NEW
-├── .env                            # Environment vars       ← NEW
-├── .env.example                    # Env template
-└── package.json                    # Dependencies           ← UPDATED
+│   └── sensor_collector.py
+├── deployments/
+├── assets/
+│   └── screenshots/
+├── index.html
+├── script.js
+├── style.css
+├── hardhat.config.js
+├── .env.example
+├── package.json
+└── README.md
 ```
 
 ---
 
 ## 🚀 Setup & Run
 
-### 1. Install dependencies
+### 1. Install Dependencies
+
 ```bash
 npm install
 ```
 
-### 2. Setup environment
+### 2. Configure Environment Variables
+
 ```bash
 cp .env.example .env
-# Edit .env with your actual keys
 ```
 
-### 3. Compile smart contracts
+Update the `.env` file with your credentials and API keys.
+
+### 3. Compile Smart Contracts
+
 ```bash
 npm run compile
 ```
 
-### 4. Deploy to testnet
+### 4. Deploy Contracts
+
 ```bash
 npm run deploy:testnet
 ```
 
-### 5. Start backend server
+### 5. Start Backend Server
+
 ```bash
 npm run dev
 ```
 
-### 6. Start IoT collector
+### 6. Start IoT Collector
+
 ```bash
 npm run iot
 ```
 
 ---
 
-## 🌐 Network Info
+## 🌐 Network Information
 
-| Network | Chain ID | RPC |
-|---------|----------|-----|
+| Network | Chain ID | RPC Endpoint |
+|----------|----------|-------------|
 | Polygon zkEVM Testnet | 1442 | https://rpc.public.zkevm-test.net |
 | Polygon zkEVM Mainnet | 1101 | https://zkevm-rpc.com |
 
@@ -94,44 +106,55 @@ npm run iot
 
 ## 📡 API Endpoints
 
-| Method | Route | Description |
-|--------|-------|-------------|
-| GET | `/api/claims` | All claims |
-| POST | `/api/claims` | New claim |
-| GET | `/api/claims/:id` | Single claim |
+| Method | Endpoint | Description |
+|----------|----------|-------------|
+| GET | `/api/claims` | Get all claims |
+| POST | `/api/claims` | Create new claim |
+| GET | `/api/claims/:id` | Get claim by ID |
 | PUT | `/api/claims/:id` | Update claim |
 | DELETE | `/api/claims/:id` | Delete claim |
 | POST | `/api/auth/login` | User login |
-| POST | `/api/auth/register` | User register |
+| POST | `/api/auth/register` | User registration |
 
 ---
 
-## 🔑 .env Keys Required
+## 🔑 Environment Variables
 
-```
-MONGO_URI            → MongoDB connection string
-JWT_SECRET           → Auth secret key
-PRIVATE_KEY          → Wallet private key (for deployment)
-POLYGON_ZKEVM_RPC    → RPC endpoint
-POLYGONSCAN_API_KEY  → For contract verification
-INFURA_IPFS_PROJECT_ID → IPFS storage
+```env
+MONGO_URI=
+JWT_SECRET=
+PRIVATE_KEY=
+POLYGON_ZKEVM_RPC=
+POLYGONSCAN_API_KEY=
+INFURA_IPFS_PROJECT_ID=
 ```
 
 ---
 
 ## ⚡ Tech Stack
 
-- **Blockchain**: Polygon zkEVM
-- **Smart Contracts**: Solidity 0.8.19 + Hardhat
-- **Oracle**: Chainlink v2.1
-- **Storage**: IPFS (Infura)
-- **Backend**: Node.js + Express + MongoDB
-- **IoT**: Python sensor collector
-- **Frontend**: Vanilla JS + Web3.js
+- Blockchain: Polygon zkEVM
+- Smart Contracts: Solidity + Hardhat
+- Oracle: Chainlink
+- Storage: IPFS
+- Backend: Node.js + Express.js
+- Database: MongoDB
+- IoT Integration: Python
+- Frontend: HTML, CSS, JavaScript, Web3.js
 
-- ## 👨‍💻 Developer
+---
+
+## 👨‍💻 Developer
 
 **Kaveesh Dhiman**
-- 🏢 Ex-Intern @ National Informatics Centre (NIC), Government of India
-- 🎓 B.Tech CSE — Dronacharya College of Engineering
-- 📧 [kaveesh9876@gmail.com](mailto:kaveesh9876@gmail.com)
+
+- Ex-Intern @ National Informatics Centre (NIC), Government of India
+- B.Tech CSE (IoT, Cyber Security & Blockchain)
+- Dronacharya College of Engineering
+- Email: kaveesh9876@gmail.com
+
+---
+
+## 📄 License
+
+This project is developed for educational, research, and portfolio purposes.
