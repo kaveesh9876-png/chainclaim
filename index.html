@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChainClaim Dashboard</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<div class="bg-canvas"></div>
+<div class="grid-overlay"></div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toasts"></div>
+
+<!-- New Claim Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">⚡ Submit New Claim</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Policy ID</label>
+          <input class="form-input" id="f-policy" placeholder="POL-XXXX" value="POL-2847">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Claim Type</label>
+          <select class="form-select" id="f-type">
+            <option>Vehicle Accident</option>
+            <option>Property Damage</option>
+            <option>Medical Emergency</option>
+            <option>Theft / Burglary</option>
+            <option>Natural Disaster</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Incident Description</label>
+        <input class="form-input" id="f-desc" placeholder="Brief description of incident...">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Claim Amount ($)</label>
+          <input class="form-input" id="f-amount" type="number" placeholder="0.00" value="12500">
+        </div>
+        <div class="form-group">
+          <label class="form-label">IoT Device ID</label>
+          <input class="form-input" id="f-iot" placeholder="DEV-XXXX" value="DEV-9341">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Priority</label>
+        <select class="form-select" id="f-priority">
+          <option>Standard</option>
+          <option>High Priority</option>
+          <option>Emergency</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-submit" onclick="submitClaim()">🔗 Submit to Blockchain</button>
+    </div>
+  </div>
+</div>
+
+<div class="app-shell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <div class="logo-icon">⛓️</div>
+        <div>
+          <div class="logo-text">Chain<span>Claim</span></div>
+        </div>
+      </div>
+      <div class="logo-sub">Enterprise Platform v3.1</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Core</div>
+      <div class="nav-item active"><span class="nav-icon">📊</span> Overview Dashboard</div>
+      <div class="nav-item" onclick="navClick(this)"><span class="nav-icon">📋</span> Claims Management <span class="nav-badge">12</span></div>
+      <div class="nav-item" onclick="navClick(this)"><span class="nav-icon">🛡️</span> Policy Center</div>
+      <div class="nav-item" onclick="navClick(this)"><span class="nav-icon">🔍</span> Fraud Detection <span class="nav-badge amber">3</span></div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Infrastructure</div>
+      <div class="nav-item" onclick="navClick(this)"><span class="nav-icon">📡</span> IoT Devices <span class="nav-badge green">247</span></div>
+      <div class="nav-item" onclick="navClick(this)"><span class="nav-icon">⛓️</span> Blockchain Nodes</div>
+      <div class="nav-item" onclick="navClick(this)"><span class="nav-icon">📜</span> Smart Contracts</div>
+      <div class="nav-item" onclick="navClick(this)"><span class="nav-icon">🗺️</span> Asset Tracking</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Analytics</div>
+      <div class="nav-item" onclick="navClick(this)"><span class="nav-icon">📈</span> Reports & BI</div>
+      <div class="nav-item" onclick="navClick(this)"><span class="nav-icon">🔐</span> Audit Logs</div>
+      <div class="nav-item" onclick="navClick(this)"><span class="nav-icon">👥</span> Access Control</div>
+      <div class="nav-item" onclick="navClick(this)"><span class="nav-icon">⚙️</span> System Config</div>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="user-card">
+        <div class="user-avatar">AK</div>
+        <div>
+          <div class="user-name">Arjun Kumar</div>
+          <div class="user-role">Super Admin</div>
+        </div>
+        <div class="status-dot"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <!-- Network Status Bar -->
+    <div class="network-bar">
+      <div class="net-item"><div class="net-dot green"></div> <span>Polygon zkEVM</span> <span class="net-val" id="net-block">Block #7,429,841</span></div>
+      <div class="net-item"><div class="net-dot cyan"></div> <span>IPFS Node</span> <span class="net-val">Connected</span></div>
+      <div class="net-item"><div class="net-dot green"></div> <span>IoT Gateway</span> <span class="net-val" id="net-iot">247 Devices</span></div>
+      <div class="net-item"><div class="net-dot amber"></div> <span>Oracle</span> <span class="net-val">Chainlink v2.1</span></div>
+      <div style="margin-left:auto; display:flex; gap:16px;">
+        <div class="net-item"><span>Gas:</span><span class="net-val" id="net-gas" style="color:var(--accent-amber)">24 Gwei</span></div>
+        <div class="net-item"><span>TPS:</span><span class="net-val" id="net-tps" style="color:var(--accent-cyan)">847</span></div>
+        <div class="net-item"><span>Latency:</span><span class="net-val" style="color:var(--accent-green)">12ms</span></div>
+      </div>
+    </div>
+
+    <!-- Top Bar -->
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Overview <span>/ Dashboard</span></div>
+      </div>
+      <div class="topbar-right">
+        <div class="live-indicator"><div class="live-dot"></div> LIVE</div>
+        <button class="topbar-btn" onclick="showToast('Refreshing data...', 'info')">⟳ Refresh</button>
+        <button class="topbar-btn" onclick="showToast('Report generated!', 'success')">📥 Export</button>
+        <button class="topbar-btn primary" onclick="openModal()">+ New Claim</button>
+      </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="dashboard">
+
+      <!-- KPI Row -->
+      <div class="kpi-row">
+        <div class="kpi-card cyan">
+          <div class="kpi-header">
+            <div class="kpi-icon cyan">📋</div>
+            <div class="kpi-trend up">▲ 8.4%</div>
+          </div>
+          <div class="kpi-value" id="kpi-total">4,872</div>
+          <div class="kpi-label">Total Claims (YTD)</div>
+          <svg class="sparkline" viewBox="0 0 120 36" preserveAspectRatio="none">
+            <polyline id="spark-1" fill="none" stroke="var(--accent-cyan)" stroke-width="1.5" opacity="0.8"/>
+          </svg>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-header">
+            <div class="kpi-icon green">✅</div>
+            <div class="kpi-trend up">▲ 12.1%</div>
+          </div>
+          <div class="kpi-value" id="kpi-approved">$18.4M</div>
+          <div class="kpi-label">Approved Payouts</div>
+          <svg class="sparkline" viewBox="0 0 120 36" preserveAspectRatio="none">
+            <polyline id="spark-2" fill="none" stroke="var(--accent-green)" stroke-width="1.5" opacity="0.8"/>
+          </svg>
+        </div>
+        <div class="kpi-card amber">
+          <div class="kpi-header">
+            <div class="kpi-icon amber">⏳</div>
+            <div class="kpi-trend down">▼ 3.2%</div>
+          </div>
+          <div class="kpi-value" id="kpi-pending">247</div>
+          <div class="kpi-label">Pending Review</div>
+          <svg class="sparkline" viewBox="0 0 120 36" preserveAspectRatio="none">
+            <polyline id="spark-3" fill="none" stroke="var(--accent-amber)" stroke-width="1.5" opacity="0.8"/>
+          </svg>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-header">
+            <div class="kpi-icon red">🛡️</div>
+            <div class="kpi-trend up">▲ 22.7%</div>
+          </div>
+          <div class="kpi-value" id="kpi-fraud">$3.1M</div>
+          <div class="kpi-label">Fraud Blocked</div>
+          <svg class="sparkline" viewBox="0 0 120 36" preserveAspectRatio="none">
+            <polyline id="spark-4" fill="none" stroke="var(--accent-red)" stroke-width="1.5" opacity="0.8"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Main Grid -->
+      <div class="main-grid">
+        <!-- Blockchain 3D Panel -->
+        <div class="blockchain-panel">
+          <div class="panel-header">
+            <div class="panel-title">⛓️ Blockchain Visualizer — Polygon zkEVM</div>
+            <div class="panel-controls">
+              <button class="panel-ctrl active">Live</button>
+              <button class="panel-ctrl" onclick="showToast('3D view loading...','info')">3D</button>
+              <button class="panel-ctrl" onclick="showToast('Graph view...','info')">Graph</button>
+            </div>
+          </div>
+          <canvas id="three-canvas"></canvas>
+          <div class="blocks-feed" id="blocks-feed"></div>
+        </div>
+
+        <!-- Claims Feed -->
+        <div class="claims-panel">
+          <div class="panel-header">
+            <div class="panel-title">📋 Live Claims Feed</div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <span style="font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;" id="claim-count">12 active</span>
+            </div>
+          </div>
+          <div class="claims-list" id="claims-list"></div>
+        </div>
+      </div>
+
+      <!-- Bottom Grid -->
+      <div class="bottom-grid">
+        <!-- IoT Panel -->
+        <div class="iot-panel">
+          <div class="panel-header">
+            <div class="panel-title">📡 IoT Sensors</div>
+            <span style="font-size:11px;color:var(--accent-green);font-family:'JetBrains Mono',monospace;">247 Online</span>
+          </div>
+          <div class="map-preview" id="iot-map"></div>
+          <div class="sensor-list" id="sensors-list"></div>
+        </div>
+
+        <!-- Analytics -->
+        <div class="analytics-panel">
+          <div class="panel-header">
+            <div class="panel-title">📈 Claims Analytics</div>
+            <div class="panel-controls">
+              <button class="panel-ctrl active" onclick="switchChart(this,'7d')">7D</button>
+              <button class="panel-ctrl" onclick="switchChart(this,'30d')">30D</button>
+              <button class="panel-ctrl" onclick="switchChart(this,'1y')">1Y</button>
+            </div>
+          </div>
+          <svg id="analytics-chart" viewBox="0 0 320 140" style="width:100%;padding:0 16px 16px;display:block;"></svg>
+        </div>
+
+        <!-- Activity -->
+        <div class="activity-panel">
+          <div class="panel-header">
+            <div class="panel-title">⚡ Activity Feed</div>
+            <span style="font-size:11px;color:var(--text-muted);">Real-time</span>
+          </div>
+          <div class="activity-feed" id="activity-feed"></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="script.js"></script>
+
+</body>
+
+</html>
