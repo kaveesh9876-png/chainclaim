@@ -1,6 +1,6 @@
 # ⛓️ ChainClaim — Enterprise Blockchain Insurance Platform
 
-> Polygon zkEVM + Chainlink Oracle + IPFS + IoT Sensors
+> A modern insurance claim management dashboard built with JavaScript, HTML, CSS, Node.js, Express.js, and MongoDB.
 
 ---
 
@@ -93,6 +93,17 @@ npm run iot
 
 ---
 
+## 🚀 Features
+
+- Interactive Dashboard
+- Claims Management
+- Policy Tracking
+- Fraud Detection Interface
+- Analytics Dashboard
+- User Authentication
+- Responsive UI Design
+
+
 ## 🌐 Network Information
 
 | Network | Chain ID | RPC Endpoint |
@@ -126,6 +137,16 @@ POLYGON_ZKEVM_RPC=
 POLYGONSCAN_API_KEY=
 INFURA_IPFS_PROJECT_ID=
 ```
+
+---
+## 📡 API
+
+| Method | Endpoint | Description |
+|----------|----------|-------------|
+| GET | /api/claims | Get all claims |
+| POST | /api/claims | Create claim |
+| PUT | /api/claims/:id | Update claim |
+| DELETE | /api/claims/:id | Delete claim |
 
 ---
 
