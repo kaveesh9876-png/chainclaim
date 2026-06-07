@@ -1,6 +1,15 @@
 # ⛓️ ChainClaim — Enterprise Blockchain Insurance Platform
-
 > Polygon zkEVM + Chainlink Oracle + IPFS + IoT Sensors
+
+---
+
+## 📸 Screenshots
+
+![Dashboard](assets/screenshots/dashboard.png)
+
+![IoT Analytics](assets/screenshots/iot-analytics.png)
+
+![New Claim](assets/screenshots/new-claim.png)
 
 ---
 
@@ -24,6 +33,7 @@ CHAINCLAIM/
 ├── iot/
 │   └── sensor_collector.py         # IoT sensor data
 ├── deployments/                    # Auto-generated after deploy
+├── assets/screenshots/             # Project screenshots
 ├── index.html                      # Frontend
 ├── script.js                       # Frontend JS
 ├── style.css                       # Frontend CSS
