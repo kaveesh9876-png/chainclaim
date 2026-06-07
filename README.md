@@ -124,4 +124,4 @@ INFURA_IPFS_PROJECT_ID → IPFS storage
 - **Storage**: IPFS (Infura)
 - **Backend**: Node.js + Express + MongoDB
 - **IoT**: Python sensor collector
-- **Frontend**: Vanilla JS + Web3.js
+- **Frontend**: Vanilla JS + Web3.js 
